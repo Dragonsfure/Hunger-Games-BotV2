@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits } from "discord.js";
+import { ActivityType, Client, GatewayIntentBits } from "discord.js";
 import { config } from "./config";
 import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
@@ -15,6 +15,11 @@ export const client = new Client({
 
 client.once("ready", async () => {
   console.log("Discord bot is ready! 🤖");
+  client.user?.setActivity({
+    type: ActivityType.Custom,
+    name: "customstatus",
+    state: "Playing Hunger-games"
+  });
   await deployCommands({ guildId: "1191790914532815018" });
 });
 
