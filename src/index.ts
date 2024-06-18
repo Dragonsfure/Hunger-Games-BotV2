@@ -1,4 +1,8 @@
-import { ActivityType, Client, GatewayIntentBits } from "discord.js";
+import {
+  ActivityType,
+  Client,
+  GatewayIntentBits,
+} from "discord.js";
 import { config } from "./config";
 import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
@@ -18,9 +22,9 @@ client.once("ready", async () => {
   client.user?.setActivity({
     type: ActivityType.Custom,
     name: "customstatus",
-    state: "Playing Hunger-games"
+    state: "Playing Hunger-games",
   });
-  await deployCommands({ guildId: "1191790914532815018" });
+  await deployCommands({ guildId: "918565571572940820" });
 });
 
 client.on("guildCreate", async (guild) => {

@@ -6,11 +6,13 @@ import {
   MessageReaction,
   TextBasedChannel,
   ChannelType,
+  TextChannel,
 } from "discord.js";
 import { client } from "..";
 import ms from "ms";
-import { Player } from "../types/Player";
 import { GameClass } from "../types/GameClass";
+import { GetBaseEmbed } from "../lib/BaseEmbed";
+import { CreatePlayers } from "../lib/PlayerCreator";
 
 export const data = new SlashCommandBuilder()
 
@@ -52,26 +54,24 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: CommandInteraction) {
   const info = interaction.options as CommandInteractionOptionResolver;
-  const channel = info.getChannel("channel") as TextBasedChannel;
+
+  //Get the Specific Information's from the Command
+  const channel = info.getChannel("channel") as TextChannel;
   const message = info.getString("message");
   const timer = info.getString("time");
   const playerCount = info.getInteger("players");
   const guildId = interaction.guildId;
+  console.log(timer);
   const numbTime = ms(timer as string);
   const delayTime = info.getString("delaytime");
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const delayAsNumb = ms(delayTime!);
 
   if (guildId) {
-    const exampleEmbed = new EmbedBuilder()
+    const exampleEmbed = GetBaseEmbed()
       .setColor(0x0099ff)
       .setTitle("Hunger games")
-      .setDescription(message)
-      .setTimestamp()
-      .setFooter({
-        text: "Hosted by Hunger games bot",
-        iconURL: `${client.user?.avatarURL()}`,
-      });
+      .setDescription(message);
 
     if (message && channel && playerCount) {
       CollectUsers(channel, exampleEmbed, numbTime, playerCount, delayAsNumb);
@@ -84,10 +84,10 @@ export async function execute(interaction: CommandInteraction) {
 }
 
 async function CollectUsers(
-  channel: TextBasedChannel,
+  channel: TextChannel,
   embedMessage: EmbedBuilder,
   timer: number,
-  playerCount: number, 
+  playerCount: number,
   delay: number
 ) {
   channel.send({ embeds: [embedMessage] }).then((embedMessage) => {
@@ -104,28 +104,16 @@ async function CollectUsers(
     });
 
     collector.on("end", (collected) => {
-      const userIds = collected
+      const users = collected
         .get("👍")
         ?.users.cache.filter((x) => x.id !== client.application?.id);
 
       //Create the Players from the
-      const players: Player[] = [];
-      userIds?.forEach((x) => {
-        const urlStr = x.avatarURL();
-
-        players.push({
-          User: `<@${x.id}>`,
-          IsAlive: true,
-          Name: x.username,
-          Url: urlStr !== null ? urlStr : "",
-          Events: [],
-          SurvivalRate: 1,
-        });
-      });
+      const players = CreatePlayers(users);
       channel.send("The Collection ended");
 
-      const myGame = new GameClass(players, channel);
-      myGame.PrepareGame(delay);
+      const myGame = new GameClass(channel);
+      myGame.PlayGame();
     });
   });
 }

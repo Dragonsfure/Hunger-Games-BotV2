@@ -1,7 +1,10 @@
 import { AttachmentBuilder, EmbedBuilder } from "discord.js";
-import { client } from "../..";
+import { GetBaseEmbed } from "../../lib/BaseEmbed";
 
-export function CreateRoundMessage(buffers: Buffer[], roundNumber: number) {
+export async function CreateRoundMessage(
+  buffers: Buffer[],
+  roundNumber: number
+) {
   const myAttachments = CreateMessageAttachments(
     buffers,
     `Round ${roundNumber}`
@@ -66,14 +69,7 @@ function CreateMessageAttachments(
 
   //Creates Attachment Objects for each buffer and saves them in the Arrays.
   for (let i = 0; i < buffers.length; i++) {
-    const exampleEmbed = new EmbedBuilder()
-      .setTitle(title)
-      .setColor(embedColor)
-      .setTimestamp()
-      .setFooter({
-        text: "Hosted by Hunger games bot",
-        iconURL: `${client.user?.avatarURL()}`,
-      });
+    const exampleEmbed = GetBaseEmbed().setTitle(title).setColor(embedColor);
 
     const myAttachment = new AttachmentBuilder(buffers[i], {
       name: `${title.replace(/\s/g, "")}_${i}.png`,
@@ -87,4 +83,17 @@ function CreateMessageAttachments(
   }
 
   return [exampleEmbeds, myAttachments];
+}
+
+export async function CreateTestMessage(buffers: Buffer) {
+  const myAttachments = CreateMessageAttachments([buffers], `Round test`);
+
+  //Create the Result Object.
+  const result = {
+    content: "",
+    embeds: myAttachments[0],
+    files: myAttachments[1],
+  };
+
+  return result;
 }

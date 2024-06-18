@@ -13,7 +13,7 @@ export function CreateHtmlDistrict(district: District): string {
   for (let i = 0; i < district.Players.length; i++) {
     str += ` <div>
     <h2>${district.Players[i].Name}</h2>
-    <div class="${district.Players[i].IsAlive ? "":  "dead-player"}">
+    <div class="${district.Players[i].IsAlive ? "" : "dead-player"}">
     <img  src="${district.Players[i].Url}" alt="${district.Players[i].Url}">
     </div>
   </div>`;
@@ -64,7 +64,7 @@ export function CreateDieHTML(game: Round): string[] {
   //Create the HTML for the Dead Players.
   const htmlStrings: string[] = [];
 
-  const listOfDist: District[] = game.DiedInROund; 
+  const listOfDist: District[] = game.DiedInROund;
 
   if (listOfDist.length > 0 && listOfDist[0].Players.length > 0) {
     const amountOfPlayer = listOfDist[0].Players.length;
@@ -126,20 +126,13 @@ export function CreateRoundHtml(game: Round): string[] {
     let x = 0;
 
     for (let i = 0; i < game.HadEvent.length; i++) {
-      for (
-        let j = 0;
-        j < game.HadEvent[i].Players.length;
-        j++
-      ) {
+      for (let j = 0; j < game.HadEvent[i].Players.length; j++) {
         const element = game.HadEvent[i].Players[j];
 
         districtHelper += CreatePlayerRoundHTML(element);
         x++;
 
-        if (
-          x >= maxPlayer ||
-          i + 1 >= game.HadEvent.length
-        ) {
+        if (x >= maxPlayer || i + 1 >= game.HadEvent.length) {
           const result = `<div>  <div class="picture-containerRound"> ${districtHelper}  </div> </div>`;
           const str = template.replace("{0}", result);
           htmlStrings.push(str);
@@ -170,7 +163,7 @@ function CreatePlayerHTML(player: Player, isWinner = false): string {
   const result = ` <div class = "DistContainer">
    <h2>${player.Name}</h2>
       <div class="">
-          <img ${!isWinner ? "" : "class=\"winner-pic\""} src="${player.Url}"
+          <img ${!isWinner ? "" : 'class="winner-pic"'} src="${player.Url}"
               alt="${player.Name} Profile Picture">
       </div>
       <p>
@@ -198,5 +191,23 @@ export function CreateWinnerHTML(player: Player) {
 </div>`;
 
   const result = template.replace("{0}", container);
+  return result;
+}
+
+export function CreateTestHTML() {
+  const template = `<html><head> <style> ${styles} </style> </head> <body>  {0} </body> </html>`;
+
+  const testString = ` <h1 >🤓--R.I.P. Bozos--🤓</h1>
+    <div>
+        <h1>District test</h1>
+
+        <div class="picture-container">
+            <div>
+                <h1>Hello</h1>
+            </div>
+        </div>
+    </div>`;
+  const result = template.replace("{0}", testString);
+
   return result;
 }

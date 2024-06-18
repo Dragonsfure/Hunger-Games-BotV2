@@ -7,7 +7,6 @@
     "removeComments": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
     "strict": true,
     "strictNullChecks": true,
 
@@ -18,7 +17,5 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "skipLibCheck": false,
-
-    "baseUrl": "."
   }
 }
