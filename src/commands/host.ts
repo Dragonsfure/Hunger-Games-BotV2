@@ -4,7 +4,6 @@ import {
   EmbedBuilder,
   CommandInteractionOptionResolver,
   MessageReaction,
-  TextBasedChannel,
   ChannelType,
   TextChannel,
 } from "discord.js";
@@ -13,6 +12,7 @@ import ms from "ms";
 import { GameClass } from "../types/GameClass";
 import { GetBaseEmbed } from "../lib/BaseEmbed";
 import { CreatePlayers } from "../lib/PlayerCreator";
+import { globalState } from "../data/gamestorage";
 
 export const data = new SlashCommandBuilder()
 
@@ -67,6 +67,13 @@ export async function execute(interaction: CommandInteraction) {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const delayAsNumb = ms(delayTime!);
 
+  if(globalState.game){
+    return interaction.reply({
+      content: "A Game is still runnning force it to stop with the /fStopGame ",
+      ephemeral: true,
+    });
+  }
+
   if (guildId) {
     const exampleEmbed = GetBaseEmbed()
       .setColor(0x0099ff)
@@ -112,8 +119,15 @@ async function CollectUsers(
       const players = CreatePlayers(users);
       channel.send("The Collection ended");
 
-      const myGame = new GameClass(channel);
-      myGame.PlayGame();
+      const myGame = new GameClass(players, channel, delay);
+      globalState.game = myGame; 
+
+      if (globalState.game) {
+        console.log(`Current game is running`);
+      } else {
+        console.log('No game is set');
+      }
+      myGame.PrepareGame();
     });
   });
 }
