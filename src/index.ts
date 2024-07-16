@@ -22,13 +22,13 @@ client.once("ready", async () => {
   client.user?.setActivity({
     type: ActivityType.Custom,
     name: "customstatus",
-    state: "Playing Hunger-games",
+    state: "Playing Hunger-Games",
   });
-  await deployCommands({ guildId: "918565571572940820" });
+  await deployCommands();
 });
 
-client.on("guildCreate", async (guild) => {
-  await deployCommands({ guildId: guild.id });
+client.on("guildCreate", async () => {
+  await deployCommands();
 });
 
 client.on("interactionCreate", async (interaction) => {
