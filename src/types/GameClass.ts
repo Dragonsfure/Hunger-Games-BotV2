@@ -38,26 +38,30 @@ export class GameClass implements Game {
   private delay: number;
   private playing = true;
 
-  constructor(players: Player[], channel: TextBasedChannel) {
+  constructor(
+    players: Player[],
+    channel: TextBasedChannel,
+    interValTime: number
+  ) {
     this.roundId = 0;
     this.playersAlive = players.length;
     this.Districts = MakeGame(players).Districts;
     this.Channel = channel;
     this.Rounds = [];
-    this.delay = 1_000;
+    this.delay = interValTime;
   }
 
-  async PrepareGame(intervalTime = 5000) {
-    this.delay = intervalTime;
-
-    if (this.playersAlive ===0 ) {
+  async PrepareGame() {
+    if (this.playersAlive === 0) {
+      console.error("Theres no Players");
       return;
     }
+
     //Gets the Strings that need to be converted.
     const str = CreateGameHtml(this.Districts);
     //Gets the Converted Picture buffers
     const buffers = await GetPictureBuffer(str);
-    const message = CreateRoundMessage(buffers, this.roundId);
+    const message = await CreateRoundMessage(buffers, this.roundId);
     //Sends the Feedback to the Server.
     await SendMessage(
       this.Channel,
@@ -66,10 +70,7 @@ export class GameClass implements Game {
         "----------------------------------------------------"
     );
 
-    if (
-      message.embeds.length !== 0 &&
-      message.files.length !== 0 
-    ) {
+    if (message.embeds.length !== 0 && message.files.length !== 0) {
       //Sends the Feedback to the Server.
       await SendMessage(this.Channel, message);
     }
@@ -83,14 +84,16 @@ export class GameClass implements Game {
     this.Rounds.push(round);
     this.roundId++;
 
-    while (this.playing) {
+    setTimeout(() => {
       this.PlayGame(this);
-    }
+    }, this.delay);
   }
   private async PlayGame(game: GameClass) {
     // Here out the Logic for the game rounds or start it.
     // Another way to check if only one player is Alive.
     if (game.playersAlive > 1) {
+      console.log(`playing ${this.roundId} with this`);
+
       // console.log(
       //   `Playing the game with Instance ${game} ${game.roundId} alive ${game.playersAlive}`
       // );
@@ -117,6 +120,10 @@ export class GameClass implements Game {
       game.Rounds[this.roundId].AliveDistricts = game.Districts;
 
       game.roundId++;
+
+      setTimeout(() => {
+        this.PlayGame(this);
+      }, this.delay);
     } else {
       this.playing = false;
 
@@ -131,7 +138,8 @@ export class GameClass implements Game {
         }
       }
 
-      game.GameMessagesHandler(game);
+      console.log("End Game"); 
+      // game.GameMessagesHandler(game);
     }
   }
 
@@ -147,10 +155,7 @@ export class GameClass implements Game {
     const dieBuffer = await GetPictureBuffer(dieHTML);
     const dieMessage = CreateDieMessage(dieBuffer, id);
 
-    if (
-      dieMessage.embeds.length !== 0 &&
-      dieMessage.files.length !== 0
-    ) {
+    if (dieMessage.embeds.length !== 0 && dieMessage.files.length !== 0) {
       //Sends the Feedback to the Server.
       SendMessage(channel, dieMessage);
     }
@@ -225,7 +230,7 @@ export class GameClass implements Game {
           Name: this.Districts[i].Players[j].Name,
           Url: this.Districts[i].Players[j].Url,
           SurvivalRate: this.Districts[i].Players[j].SurvivalRate,
-          User: this.Districts[i].Players[j].User
+          User: this.Districts[i].Players[j].User,
         };
 
         //Gets the Event to match to.
@@ -314,61 +319,63 @@ export class GameClass implements Game {
     this.Rounds.push(round);
   }
 
-  private async GameMessagesHandler(game: GameClass) {
-    for (let index = 1; index < game.Rounds.length; index++) {
+  // private async GameMessagesHandler(game: GameClass) {
+  //   for (let index = 1; index < game.Rounds.length; index++) {
+  //     await SendMessage(
+  //       this.Channel,
+  //       "----------------------------------------------------" +
+  //         "\r\nNew Round\r\n" +
+  //         "----------------------------------------------------"
+  //     );
+  //     //picture event
+  //     const htmlRound = CreateRoundHtml(game.Rounds[index]);
 
-     await SendMessage(
-        this.Channel,
-        "----------------------------------------------------" +
-          "\r\nNew Round\r\n" +
-          "----------------------------------------------------"
-      );
-      //picture event
-      const htmlRound = CreateRoundHtml(game.Rounds[index]);
+  //     for (let i = 0; i < htmlRound.length; i++) {
+  //       const element = htmlRound[i];
+  //       const roundBuffers = (await GetPictureBufferSingleSync(
+  //         element
+  //       )) as Buffer;
+  //       const roundMessage = CreateRoundMessage([roundBuffers], index);
+  //       if (
+  //         roundMessage.embeds.length !== 0 &&
+  //         roundMessage.files.length !== 0
+  //       ) {
+  //         SendMessage(game.Channel, roundMessage);
+  //       }
+  //       console.log("Sended something ");
+  //       await delay(game.delay);
+  //     }
 
-      for (let i = 0; i < htmlRound.length; i++) {
-        const element = htmlRound[i];
-        const roundBuffers = (await GetPictureBufferSingleSync(
-          element
-        )) as Buffer;
-        const roundMessage = CreateRoundMessage([roundBuffers], index);
-        if (
-          roundMessage.embeds.length !== 0 &&
-          roundMessage.files.length !== 0 
-        ) {
-          SendMessage(game.Channel, roundMessage);
-        }
-        console.log("Sended something ");
-        await delay(game.delay);
-      }
+  //     // The async Method Call to not block the Thread.
+  //     await GameClass.SendRoundMessages(
+  //       game.Channel,
+  //       game.Rounds[index],
+  //       game.Rounds[index].AliveDistricts,
+  //       index
+  //     );
 
-      // The async Method Call to not block the Thread.
-      await GameClass.SendRoundMessages(
-        game.Channel,
-        game.Rounds[index],
-        game.Rounds[index].AliveDistricts,
-        index
-      );
+  //     console.log("Sended something ");
+  //     await delay(game.delay);
+  //   }
+  //   try {
+  //     const winnerHtml = CreateWinnerHTML(game.Districts[0].Players[0]);
+  //     const buffer = await GetPictureBufferSingle(winnerHtml);
 
-      console.log("Sended something ");
-      await delay(game.delay);
-    }
-    try {
-
-    const winnerHtml = CreateWinnerHTML(game.Districts[0].Players[0]);
-    const buffer = await GetPictureBufferSingle(winnerHtml);
-
-      const message = CreateEndMessage(buffer, game.Districts[0].Players[0].User);
-      SendMessage(game.Channel, message);
-    } catch (error) {
-      //Only log error
-      console.log(error);
-    }
-      console.log("Sended something ");
-    console.log("Ended Sending");
-  }
+  //     const message = CreateEndMessage(
+  //       buffer,
+  //       game.Districts[0].Players[0].User
+  //     );
+  //     SendMessage(game.Channel, message);
+  //   } catch (error) {
+  //     //Only log error
+  //     console.log(error);
+  //   }
+  //   console.log("Sended something ");
+  //   console.log("Ended Sending");
+  // }
 }
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
