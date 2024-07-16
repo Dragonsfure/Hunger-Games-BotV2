@@ -17,5 +17,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "skipLibCheck": false,
+    "sourceMap": true,
+    "allowJs": true
   }
 }
