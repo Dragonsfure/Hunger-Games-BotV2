@@ -13,7 +13,8 @@ div {
   margin: 10px;
 }
 
-h1, h2 {
+h1,
+h2 {
   text-decoration: underline;
 }
 
@@ -29,7 +30,6 @@ img {
   border-radius: 20px;
 }
 
-
 div.picture-container {
   display: flex;
   flex-wrap: wrap;
@@ -38,19 +38,21 @@ div.picture-container {
   margin-top: 50px;
 }
 
-div.picture-containerRound{
+div.picture-containerRound {
   margin-top: 50px;
 }
 
-div.dead-player > img{
-    filter: grayscale(100%); /* Apply full grayscale effect when character is dead */
+div.dead-player > img {
+  filter: grayscale(
+    100%
+  ); /* Apply full grayscale effect when character is dead */
 }
 
-div.DistContainer{
+div.DistContainer {
   margin-top: 45px;
 }
 
-h1.dist{
+h1.dist {
   margin: 0;
   margin-top: 30px;
 }

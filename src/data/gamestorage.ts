@@ -25,3 +25,4 @@ class GlobalState {
 }
 
 export const globalState = GlobalState.getInstance();
+

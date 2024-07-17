@@ -1,8 +1,4 @@
-import {
-  ActivityType,
-  Client,
-  GatewayIntentBits,
-} from "discord.js";
+import { ActivityType, Client, GatewayIntentBits } from "discord.js";
 import { config } from "./config";
 import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
@@ -42,3 +38,4 @@ client.on("interactionCreate", async (interaction) => {
 });
 
 client.login(config.DISCORD_TOKEN);
+

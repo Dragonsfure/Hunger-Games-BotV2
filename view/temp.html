@@ -1,26 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="customstyles.css" />
+  </head>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="customstyles.css">
-</head>
-
-<body>
-    <h1 >🤓--R.I.P. Bozos--🤓</h1>
+  <body>
+    <h1>🤓--R.I.P. Bozos--🤓</h1>
     <div>
-        <h1>District ${district.DistNumber} </h1>
+      <h1>District ${district.DistNumber}</h1>
 
-        <div class="picture-container">
-            <div>
-                <h3>${district.Players[i].Name}</h3>
-                <div class="dead-player" >
-                    <img src="${district.Players[i].Url}" alt="${district.Players[i].Url}">
-                </div>
-            </div>
+      <div class="picture-container">
+        <div>
+          <h3>${district.Players[i].Name}</h3>
+          <div class="dead-player">
+            <img
+              src="${district.Players[i].Url}"
+              alt="${district.Players[i].Url}"
+            />
+          </div>
         </div>
+      </div>
     </div>
-</body>
-
+  </body>
 </html>

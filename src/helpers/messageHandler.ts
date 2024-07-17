@@ -1,11 +1,13 @@
 import {
   MessageCreateOptions,
-  MessagePayload, TextBasedChannel,
+  MessagePayload,
+  TextBasedChannel,
 } from "discord.js";
 
-export async function  SendMessage(
+export async function SendMessage(
   channel: TextBasedChannel,
   content: string | MessagePayload | MessageCreateOptions
 ) {
   await channel.send(content);
 }
+

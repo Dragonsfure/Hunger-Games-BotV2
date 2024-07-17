@@ -29,7 +29,7 @@ export const miscScenario = new SingleScenario([
   "{0} hides away in the trees ",
 ]);
 
-export const slowDeathScenario = new SingleScenario ([
+export const slowDeathScenario = new SingleScenario([
   "{0} dies by dehydration",
   "{0} dies of hunger",
   "{0} bleeds out due to untreated wounds",

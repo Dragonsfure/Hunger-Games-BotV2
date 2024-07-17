@@ -1,7 +1,9 @@
 import { Collection, User } from "discord.js";
 import { Player } from "../types/Player";
 
-export function CreatePlayers(userCollection: Collection<string, User> | undefined) {
+export function CreatePlayers(
+  userCollection: Collection<string, User> | undefined
+) {
   const players: Player[] = [];
 
   userCollection?.forEach((x) => {
@@ -19,3 +21,4 @@ export function CreatePlayers(userCollection: Collection<string, User> | undefin
 
   return players;
 }
+

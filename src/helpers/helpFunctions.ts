@@ -68,37 +68,44 @@ export function FilterDistForDead(districts: District[]) {
   return result;
 }
 
-export function FilterDistForAlive(roundDie: District[],   districts: District[]) {
+export function FilterDistForAlive(
+  roundDie: District[],
+  districts: District[]
+) {
   const result: District[] = [];
 
-const playersDead = roundDie.flatMap((x)=>x.Players); 
+  const playersDead = roundDie.flatMap((x) => x.Players);
 
   for (let i = 0; i < districts.length; i++) {
     const element = districts[i];
 
-    const filteredPlayers = element.Players.filter((x) => x.IsAlive === true && playersDead.findIndex((dead)=> dead.Name === x.Name)=== -1 );
+    const filteredPlayers = element.Players.filter(
+      (x) =>
+        x.IsAlive === true &&
+        playersDead.findIndex((dead) => dead.Name === x.Name) === -1
+    );
     if (filteredPlayers.length > 0) {
-      const dist:District= {
+      const dist: District = {
         DistNumber: element.DistNumber,
-        Players: []
+        Players: [],
       };
-     
+
       for (let index = 0; index < filteredPlayers.length; index++) {
         const element = filteredPlayers[index];
-        const player:Player = {
+        const player: Player = {
           Events: [],
           IsAlive: element.IsAlive,
           Name: element.Name,
           SurvivalRate: element.SurvivalRate,
           Url: element.Url,
-          User : element.User
-        }; 
-        element.Events.forEach((x)=> player.Events.push(x)); 
+          User: element.User,
+        };
+        element.Events.forEach((x) => player.Events.push(x));
 
-        dist.Players.push(player); 
+        dist.Players.push(player);
       }
 
-      result.push(dist); 
+      result.push(dist);
     }
   }
   return result;
@@ -114,3 +121,4 @@ export function CheckDeath(player: Player) {
   }
   return player;
 }
+

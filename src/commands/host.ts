@@ -67,7 +67,7 @@ export async function execute(interaction: CommandInteraction) {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const delayAsNumb = ms(delayTime!);
 
-  if(globalState.game){
+  if (globalState.game) {
     return interaction.reply({
       content: "A Game is still runnning force it to stop with the /fStopGame ",
       ephemeral: true,
@@ -120,14 +120,15 @@ async function CollectUsers(
       channel.send("The Collection ended");
 
       const myGame = new GameClass(players, channel, delay);
-      globalState.game = myGame; 
+      globalState.game = myGame;
 
       if (globalState.game) {
         console.log(`Current game is running`);
       } else {
-        console.log('No game is set');
+        console.log("No game is set");
       }
       myGame.PrepareGame();
     });
   });
 }
+
