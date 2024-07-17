@@ -121,4 +121,3 @@ export function CheckDeath(player: Player) {
   }
   return player;
 }
-
