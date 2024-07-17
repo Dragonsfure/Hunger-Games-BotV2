@@ -27,6 +27,11 @@ import {
 import { Round } from "./Round";
 import { SendMessage } from "../helpers/messageHandler";
 import { Events, EzMapSzenario, randomEnum } from "./EventEnum";
+import {
+  AliveCountLog,
+  AliveCountLogExtra,
+  RoundCountLog,
+} from "../helpers/Logger";
 
 export class GameClass implements Game {
   Districts: District[];
@@ -36,7 +41,6 @@ export class GameClass implements Game {
   public roundId;
 
   private delay: number;
-  private playing = true;
 
   constructor(
     players: Player[],
@@ -92,14 +96,13 @@ export class GameClass implements Game {
     // Here out the Logic for the game rounds or start it.
     // Another way to check if only one player is Alive.
     if (game.playersAlive > 1) {
-      console.log(`playing ${this.roundId} with this`);
-
-      // console.log(
-      //   `Playing the game with Instance ${game} ${game.roundId} alive ${game.playersAlive}`
-      // );
+      // Logging Infos for Debugging
+      RoundCountLog(this);
+      AliveCountLogExtra(this);
+      // Finished Logging
 
       game.RoundGenerator();
-      // console.log(`after gen round alive ${game.playersAlive}`);
+      AliveCountLog(this);
 
       //Filter the dead players out, so the rest works fine.
       game.Districts = FilterDistForAlive(
@@ -115,7 +118,7 @@ export class GameClass implements Game {
         game.Districts
       );
 
-      // console.log(`Number of Player alive ${game.playersAlive}`);
+      AliveCountLog(this);
 
       game.Rounds[this.roundId].AliveDistricts = game.Districts;
 
@@ -125,8 +128,7 @@ export class GameClass implements Game {
         this.PlayGame(this);
       }, this.delay);
     } else {
-      this.playing = false;
-
+      // Finished the game
       console.log("🎮 Game Ended !!!!");
       for (let I = 0; I < game.Districts.length; I++) {
         const element = game.Districts[I];
@@ -138,7 +140,7 @@ export class GameClass implements Game {
         }
       }
 
-      console.log("End Game"); 
+      console.log("End Game");
       // game.GameMessagesHandler(game);
     }
   }
@@ -209,7 +211,7 @@ export class GameClass implements Game {
     );
   }
 
-  RoundGenerator() {
+  async RoundGenerator() {
     const round: Round = {
       HadEvent: [],
       DiedInROund: [],
@@ -233,7 +235,7 @@ export class GameClass implements Game {
           User: this.Districts[i].Players[j].User,
         };
 
-        //Gets the Event to match to.
+        // Gets the Event to match to.
         const event = randomEnum(Events);
 
         let index: number;
@@ -242,11 +244,10 @@ export class GameClass implements Game {
             if (this.playersAlive > 1 && amountDie > 0) {
               focusedPlayer.IsAlive = false;
               focusedPlayer.Events.push(
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 EzMapSzenario.get(event)!.GetScenario(focusedPlayer)
               );
 
-              //Push to round thing the player with District
+              // Push to round thing the player with District
               index = this.CheckDistrict(round.DiedInROund, this.Districts[i]);
               round.DiedInROund[index].Players.push(focusedPlayer);
 
@@ -257,64 +258,64 @@ export class GameClass implements Game {
           case Events.Injury:
             focusedPlayer.SurvivalRate -= 0.35;
             focusedPlayer.Events.push(
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               EzMapSzenario.get(event)!.GetScenario(focusedPlayer)
             );
-            //Push to round thing the player with District
+            // Push to round thing the player with District
             index = this.CheckDistrict(round.HadEvent, this.Districts[i]);
             round.HadEvent[index].Players.push(focusedPlayer);
             break;
           case Events.LightInjury:
             focusedPlayer.SurvivalRate -= 0.35;
             focusedPlayer.Events.push(
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               EzMapSzenario.get(event)!.GetScenario(focusedPlayer)
             );
-            //Push to round thing the player with District
+            // Push to round thing the player with District
             index = this.CheckDistrict(round.HadEvent, this.Districts[i]);
             round.HadEvent[index].Players.push(focusedPlayer);
             break;
           case Events.Misc:
             focusedPlayer.Events.push(
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               EzMapSzenario.get(event)!.GetScenario(focusedPlayer)
             );
-            //Push to round thing the player with District
+            // Push to round thing the player with District
             index = this.CheckDistrict(round.HadEvent, this.Districts[i]);
             round.HadEvent[index].Players.push(focusedPlayer);
             break;
           case Events.LightBuff:
             focusedPlayer.SurvivalRate += 0.35;
             focusedPlayer.Events.push(
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               EzMapSzenario.get(event)!.GetScenario(focusedPlayer)
             );
-            //Push to round thing the player with District
+            // Push to round thing the player with District
             index = this.CheckDistrict(round.HadEvent, this.Districts[i]);
             round.HadEvent[index].Players.push(focusedPlayer);
             break;
           case Events.Buff:
             focusedPlayer.SurvivalRate += 0.55;
             focusedPlayer.Events.push(
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               EzMapSzenario.get(event)!.GetScenario(focusedPlayer)
             );
-            //Push to round thing the player with District
+            // Push to round thing the player with District
             index = this.CheckDistrict(round.HadEvent, this.Districts[i]);
             round.HadEvent[index].Players.push(focusedPlayer);
             break;
           case Events.NoEvent:
-          //break to default no event
+          // break to default no event
           // eslint-disable-next-line no-fallthrough
           default:
-            //Do nothing;
+            // Do nothing;
             break;
         }
+
+        // Warten Sie nach jedem Durchlauf der inneren Schleife
+        await new Promise((resolve) =>
+          setTimeout(resolve, GetRandomIndex(this.delay))
+        ); // Wartet 2 Sekunden
       }
     }
 
-    //Create the Images for the Round after this, so after this Method gets called.
-    //Check Death we will do somewhere else, so we can get the pics first and such.
+    // Create the Images for the Round after this, so after this Method gets called.
+    // Check Death we will do somewhere else, so we can get the pics first and such.
 
     this.Rounds.push(round);
   }
