@@ -18,7 +18,8 @@
     "build": "npm run build:compile ",
     "build:compile": "tsc --project tsconfig.json --skipLibCheck ",
     "release": "npm run build && npm run start",
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsc -w   -tsconfig.json ",
+    "testdev": "nodemon --inspect=5858 -e ts,tsx --exec node -r ts-node/register build/",
     "start": "node .",
     "type:check": "tsc --pretty --skipLibCheck --noEmit",
     "lint": "eslint .",
@@ -28,7 +29,9 @@
     "discord.js": "^14.7.1",
     "dotenv": "^16.0.3",
     "ms": "^2.1.3",
-    "node-html-to-image": "^4.0.0"
+    "node-html-to-image": "^4.0.0",
+    "nodemon": "^3.1.4",
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@types/ms": "^0.7.34",
