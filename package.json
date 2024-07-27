@@ -18,7 +18,7 @@
     "build": "npm run build:compile ",
     "build:compile": "tsc --project tsconfig.json --skipLibCheck ",
     "release": "npm run build && npm run start",
-    "dev": "tsc -w   -tsconfig.json ",
+    "dev": "nodemon --inspect=5858 -e ts,tsx --exec node -r ts-node/register build/",
     "testdev": "nodemon --inspect=5858 -e ts,tsx --exec node -r ts-node/register build/",
     "start": "node .",
     "type:check": "tsc --pretty --skipLibCheck --noEmit",
