@@ -9,7 +9,7 @@ import {
 } from "discord.js";
 import { client } from "..";
 import ms from "ms";
-import { GameClass } from "../types/GameClass";
+import { Game } from "../types/Game";
 import { GetBaseEmbed } from "../lib/BaseEmbed";
 import { CreatePlayers } from "../lib/PlayerCreator";
 import { globalState } from "../data/gamestorage";
@@ -119,7 +119,7 @@ async function CollectUsers(
       const players = CreatePlayers(users);
       channel.send("The Collection ended");
 
-      const myGame = new GameClass(players, channel, delay);
+      const myGame = new Game(players, channel, delay);
       globalState.game = myGame;
 
       if (globalState.game) {
@@ -127,7 +127,7 @@ async function CollectUsers(
       } else {
         console.log("No game is set");
       }
-      myGame.PrepareGame();
+      myGame.StartGame();
     });
   });
 }

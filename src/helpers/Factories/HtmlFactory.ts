@@ -2,7 +2,7 @@ import { District } from "../../types/District";
 import { NewIntervalMap } from "../intervalMap";
 import fs from "fs";
 import { Player } from "../../types/Player";
-import { Round } from "../../types/Round";
+import { isUndefined } from "util";
 
 const styles = fs.readFileSync("view/customStyles.css");
 const template = `<html><head> <style> ${styles} </style> </head> <body>  {0} </body> </html>`;
@@ -30,12 +30,22 @@ export function CreateHtmlDistrict(district: District): string {
   return result;
 }
 
-export function CreateGameHtml(game: District[]): string[] {
+export function CreateGameHtml(players: Map<string, Player>): string[] {
   //Creates an Empty Array to fill with the Strings representing the HTMLs.
   const htmlStrings: string[] = [];
+  const dists = new Map<number, Player[]>()
 
-  if (game.length > 0 && game[0].Players.length > 0) {
-    const amountOfPlayer = game[0].Players.length;
+  for (const [key, value] of players.entries()) {
+    const dist = dists.get(value.DistNumber);
+    
+    if(dist !== undefined){
+        dist.push(value)
+    }
+  }
+
+
+  if (dists.size > 0 ) {
+    const amountOfPlayer = players.size;
     const maxDistrict = NewIntervalMap.FindCorrespondingValue(
       new NewIntervalMap(),
       amountOfPlayer

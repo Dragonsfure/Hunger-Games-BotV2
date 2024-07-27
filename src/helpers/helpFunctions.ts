@@ -1,50 +1,44 @@
 import { District } from "../types/District";
-import { Game } from "../types/Game";
+import { GameUser } from "../types/GameUser";
 import { Player } from "../types/Player";
 import { slowDeathScenario } from "./eventArrays";
 import { NewPlayerMap } from "./playerMap";
 
-export function MakeGame(totalPlayers: Player[]): Game {
-  const game: Game = {
-    Districts: [],
-    Channel: null,
-    Rounds: [],
-    playersAlive: totalPlayers.length,
-    roundId: 0,
-  };
-
+export function MakeGame(totalPlayers: GameUser[]): Map<string, Player> {
   //Equation for the player per District
   const playerPerGroup = NewPlayerMap.FindCorrespondingValue(
     new NewPlayerMap(),
     totalPlayers.length
   );
 
+  const playerMap = new Map(); 
+
   //Extra counter for logic needed
-  let x = 0;
+  let currentDistId = 0;
+  let countUserInDist= 0; 
 
   while (totalPlayers.length > 0) {
-    if (game.Districts[x] === undefined) {
-      game.Districts.push({ DistNumber: x + 1, Players: [] });
+    const index = Math.floor(Math.random() * totalPlayers.length);
+    const playerAtIndex = totalPlayers.at(index);
+
+    if (playerAtIndex !== undefined) {
+      const newPlayer = new Player(playerAtIndex, currentDistId); 
+
+      playerMap.set(newPlayer.Id, newPlayer);
+      
+      const index = totalPlayers.indexOf(playerAtIndex, 0);
+      if (index > -1) {
+        totalPlayers.splice(index, 1);
+      }
+      countUserInDist++; 
     }
 
-    if (game.Districts[x].Players.length < playerPerGroup) {
-      const index = Math.floor(Math.random() * totalPlayers.length);
-      const playerAtIndex = totalPlayers.at(index);
-
-      if (playerAtIndex !== undefined) {
-        game.Districts[x].Players.push(playerAtIndex);
-
-        const index = totalPlayers.indexOf(playerAtIndex, 0);
-        if (index > -1) {
-          totalPlayers.splice(index, 1);
-        }
-      }
-    } else {
-      x++;
+    if (!(countUserInDist < playerPerGroup)) {
+      currentDistId++;
     }
   }
 
-  return game;
+  return playerMap;
 }
 
 export function GetRandomIndex(maxNumber: number) {
@@ -98,7 +92,8 @@ export function FilterDistForAlive(
           Name: element.Name,
           SurvivalRate: element.SurvivalRate,
           Url: element.Url,
-          User: element.User,
+          Id: element.Id,
+          DistNumber: element.DistNumber
         };
         element.Events.forEach((x) => player.Events.push(x));
 

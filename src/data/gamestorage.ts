@@ -1,8 +1,8 @@
-import { GameClass } from "../types/GameClass";
+import { Game } from "../types/Game";
 
 class GlobalState {
   private static instance: GlobalState;
-  private _game: GameClass | null = null;
+  private _game: Game | null = null;
 
   private constructor() {
     //Nothing
@@ -15,11 +15,11 @@ class GlobalState {
     return GlobalState.instance;
   }
 
-  public get game(): GameClass | null {
+  public get game(): Game | null {
     return this._game;
   }
 
-  public set game(value: GameClass | null) {
+  public set game(value: Game | null) {
     this._game = value;
   }
 }

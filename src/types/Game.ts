@@ -1,17 +1,378 @@
-import { TextBasedChannel } from "discord.js";
+import {
+  CreateDieHTML,
+  CreateGameHtml,
+} from "../helpers/Factories/HtmlFactory";
+import {
+  CheckDeath,
+  FilterDistForAlive,
+  GetRandomIndex,
+  MakeGame,
+} from "../helpers/helpFunctions";
 import { District } from "./District";
-import { Round } from "./Round";
+import { Player } from "./Player";
+import { TextBasedChannel } from "discord.js";
+import { GetPictureBuffer } from "../helpers/Factories/PictureFactory";
+import {
+  CreateDieMessage,
+  CreateRoundMessage,
+} from "../helpers/Factories/MessageFactory";
+import { SendMessage } from "../helpers/messageHandler";
+import { Events, EzMapSzenario, randomEnum } from "./EventEnum";
+import {
+  AliveCountLog,
+  AliveCountLogExtra,
+  RoundCountLog,
+} from "../helpers/Logger";
+import { GameUser } from "./GameUser";
 
-export interface Game {
-    Districts : District[],
+export class Game {
+  Channel: TextBasedChannel;
+  private playersAlive: number;
+  private roundId: number;
+  private delay: number;
+  private players: Map<string, Player>; 
 
+  constructor(
+    players: GameUser[],
+    channel: TextBasedChannel,
+    interValTime: number
+  ) {
+    this.roundId = 0;
+    this.playersAlive = players.length;
+    this.Channel = channel;
+    this.delay = interValTime;
+    this.players = MakeGame(players);
+  }
 
-    Channel: TextBasedChannel | null,
+  async ShowPlayers() {
+    if (this.playersAlive === 0) {
+      console.error("Theres no Players");
+      return;
+    }
 
+    //Gets the Strings that need to be converted.
+    const str = CreateGameHtml(this.players);
+    //Gets the Converted Picture buffers
+    const buffers = await GetPictureBuffer(str);
+    const message = await CreateRoundMessage(buffers, this.roundId);
+    //Sends the Feedback to the Server.
+    await SendMessage(
+      this.Channel,
+      "----------------------------------------------------" +
+        "\r\nThe Players\r\n" +
+        "----------------------------------------------------"
+    );
 
-    Rounds: Round[],
+    if (message.embeds.length !== 0 && message.files.length !== 0) {
+      //Sends the Feedback to the Server.
+      await SendMessage(this.Channel, message);
+    }
 
-    playersAlive: number, 
+    const round: Round = {
+      HadEvent: [],
+      DiedInROund: [],
+      AliveDistricts: this.Districts,
+      RoundNumber: this.roundId,
+    };
+    this.Rounds.push(round);
+    this.roundId++;
+  }
 
-    roundId: number,
+  public async StartGame(){
+    await this.ShowPlayers();
+    this.StartNextRound(); 
+  } 
+
+  private async StartNextRound() {
+    setTimeout(() => {
+      this.PlayGame(this);
+    }, this.delay);
+  }
+
+  private async PlayGame(game: Game) {
+    // Here out the Logic for the game rounds or start it.
+    // Another way to check if only one player is Alive.
+    if (game.playersAlive > 1) {
+      // Logging Infos for Debugging
+      RoundCountLog(this);
+      AliveCountLogExtra(this);
+      // Finished Logging
+
+      game.RoundGenerator();
+      AliveCountLog(this);
+
+      //Filter the dead players out, so the rest works fine.
+      game.Districts = FilterDistForAlive(
+        game.Rounds[game.roundId].DiedInROund,
+        game.Districts
+      );
+
+      //Lets People Die.
+      this.LetPlayersDie(game);
+      //Filter again afterwards.
+      game.Districts = FilterDistForAlive(
+        game.Rounds[game.roundId].DiedInROund,
+        game.Districts
+      );
+
+      AliveCountLog(this);
+
+      game.Rounds[this.roundId].AliveDistricts = game.Districts;
+
+      game.roundId++;
+
+      // Can be used to start
+     this.StartNextRound();
+    } else {
+      // Finished the game
+      console.log("🎮 Game Ended !!!!");
+      for (let I = 0; I < game.Districts.length; I++) {
+        const element = game.Districts[I];
+        for (let j = 0; j < element.Players.length; j++) {
+          const player = element.Players[j];
+          console.log(
+            `District ${element.DistNumber} player ${player.Name} ${player.IsAlive}`
+          );
+        }
+      }
+
+      console.log("End Game");
+      // game.GameMessagesHandler(game);
+    }
+  }
+
+  private static async SendRoundMessages(
+    channel: TextBasedChannel,
+    round: Round,
+    livingDistrict: District[],
+    id: number
+  ) {
+    //Gets the Strings that need to be converted.
+    const dieHTML = CreateDieHTML(round);
+    //Gets the Converted Picture buffers
+    const dieBuffer = await GetPictureBuffer(dieHTML);
+    const dieMessage = CreateDieMessage(dieBuffer, id);
+
+    if (dieMessage.embeds.length !== 0 && dieMessage.files.length !== 0) {
+      //Sends the Feedback to the Server.
+      SendMessage(channel, dieMessage);
+    }
+
+    // //Gets the Strings that need to be converted.
+    // const str = CreateGameHtml(livingDistrict);
+    // //Gets the Converted Picture buffers
+    // const buffers = await GetPictureBuffer(str);
+    // const message = CreateRoundMessage(buffers, id);
+    // //Sends the Feedback to the Server.
+    // SendMessage(
+    //   channel,
+    //   "----------------------------------------------------"
+    // );
+    // // game.Channel.send(CreateDieMessage(index + 1));
+    // SendMessage(channel, message);
+  }
+
+  private LetPlayersDie(game: Game) {
+    //Goes Trough each District to then look if someone Dies.
+    for (let i = 0; i < game.Districts.length; i++) {
+      for (let j = 0; j < game.Districts[i].Players.length; j++) {
+        if (game.playersAlive > 1) {
+          const player = CheckDeath(game.Districts[i].Players[j]);
+
+          if (!player.IsAlive) {
+            game.Districts[i].Players[j] = player;
+            game.playersAlive -= 1;
+            const index = this.CheckDistrict(
+              game.Rounds[game.roundId].DiedInROund,
+              this.Districts[i]
+            );
+
+            game.Rounds[game.roundId].DiedInROund[index].Players.push(player);
+          }
+        }
+      }
+    }
+  }
+
+  private CheckDistrict(targetDistricts: District[], district: District) {
+    if (
+      targetDistricts.findIndex((x) => x.DistNumber === district.DistNumber) ===
+      -1
+    ) {
+      targetDistricts.push({ DistNumber: district.DistNumber, Players: [] });
+    }
+
+    return targetDistricts.findIndex(
+      (x) => x.DistNumber === district.DistNumber
+    );
+  }
+
+  private async RoundGenerator() {
+    const round: Round = {
+      HadEvent: [],
+      DiedInROund: [],
+      AliveDistricts: [],
+      RoundNumber: this.roundId,
+    };
+
+    let amountDie = GetRandomIndex(10);
+    if (amountDie > 3) {
+      amountDie = 0;
+    }
+
+    for (let i = 0; i < this.Districts.length; i++) {
+      for (let j = 0; j < this.Districts[i].Players.length; j++) {
+        const focusedPlayer: Player = {
+          Events: [],
+          IsAlive: this.Districts[i].Players[j].IsAlive,
+          Name: this.Districts[i].Players[j].Name,
+          Url: this.Districts[i].Players[j].Url,
+          SurvivalRate: this.Districts[i].Players[j].SurvivalRate,
+          User: this.Districts[i].Players[j].User,
+        };
+
+        // Gets the Event to match to.
+        const event = randomEnum(Events);
+
+        let index: number;
+        switch (event) {
+          case Events.Death:
+            if (this.playersAlive > 1 && amountDie > 0) {
+              focusedPlayer.IsAlive = false;
+              focusedPlayer.Events.push(
+                EzMapSzenario.get(event)!.GetScenario(focusedPlayer)
+              );
+
+              // Push to round thing the player with District
+              index = this.CheckDistrict(round.DiedInROund, this.Districts[i]);
+              round.DiedInROund[index].Players.push(focusedPlayer);
+
+              this.playersAlive -= 1;
+              amountDie -= 1;
+            }
+            break;
+          case Events.Injury:
+            focusedPlayer.SurvivalRate -= 0.35;
+            focusedPlayer.Events.push(
+              EzMapSzenario.get(event)!.GetScenario(focusedPlayer)
+            );
+            // Push to round thing the player with District
+            index = this.CheckDistrict(round.HadEvent, this.Districts[i]);
+            round.HadEvent[index].Players.push(focusedPlayer);
+            break;
+          case Events.LightInjury:
+            focusedPlayer.SurvivalRate -= 0.35;
+            focusedPlayer.Events.push(
+              EzMapSzenario.get(event)!.GetScenario(focusedPlayer)
+            );
+            // Push to round thing the player with District
+            index = this.CheckDistrict(round.HadEvent, this.Districts[i]);
+            round.HadEvent[index].Players.push(focusedPlayer);
+            break;
+          case Events.Misc:
+            focusedPlayer.Events.push(
+              EzMapSzenario.get(event)!.GetScenario(focusedPlayer)
+            );
+            // Push to round thing the player with District
+            index = this.CheckDistrict(round.HadEvent, this.Districts[i]);
+            round.HadEvent[index].Players.push(focusedPlayer);
+            break;
+          case Events.LightBuff:
+            focusedPlayer.SurvivalRate += 0.35;
+            focusedPlayer.Events.push(
+              EzMapSzenario.get(event)!.GetScenario(focusedPlayer)
+            );
+            // Push to round thing the player with District
+            index = this.CheckDistrict(round.HadEvent, this.Districts[i]);
+            round.HadEvent[index].Players.push(focusedPlayer);
+            break;
+          case Events.Buff:
+            focusedPlayer.SurvivalRate += 0.55;
+            focusedPlayer.Events.push(
+              EzMapSzenario.get(event)!.GetScenario(focusedPlayer)
+            );
+            // Push to round thing the player with District
+            index = this.CheckDistrict(round.HadEvent, this.Districts[i]);
+            round.HadEvent[index].Players.push(focusedPlayer);
+            break;
+          case Events.NoEvent:
+          // break to default no event
+          // eslint-disable-next-line no-fallthrough
+          default:
+            // Do nothing;
+            break;
+        }
+
+        // Warten Sie nach jedem Durchlauf der inneren Schleife
+        await new Promise((resolve) =>
+          setTimeout(resolve, GetRandomIndex(this.delay))
+        ); // Wartet 2 Sekunden
+      }
+    }
+
+    // Create the Images for the Round after this, so after this Method gets called.
+    // Check Death we will do somewhere else, so we can get the pics first and such.
+
+    this.Rounds.push(round);
+  }
+
+  // private async GameMessagesHandler(game: GameClass) {
+  //   for (let index = 1; index < game.Rounds.length; index++) {
+  //     await SendMessage(
+  //       this.Channel,
+  //       "----------------------------------------------------" +
+  //         "\r\nNew Round\r\n" +
+  //         "----------------------------------------------------"
+  //     );
+  //     //picture event
+  //     const htmlRound = CreateRoundHtml(game.Rounds[index]);
+
+  //     for (let i = 0; i < htmlRound.length; i++) {
+  //       const element = htmlRound[i];
+  //       const roundBuffers = (await GetPictureBufferSingleSync(
+  //         element
+  //       )) as Buffer;
+  //       const roundMessage = CreateRoundMessage([roundBuffers], index);
+  //       if (
+  //         roundMessage.embeds.length !== 0 &&
+  //         roundMessage.files.length !== 0
+  //       ) {
+  //         SendMessage(game.Channel, roundMessage);
+  //       }
+  //       console.log("Sended something ");
+  //       await delay(game.delay);
+  //     }
+
+  //     // The async Method Call to not block the Thread.
+  //     await GameClass.SendRoundMessages(
+  //       game.Channel,
+  //       game.Rounds[index],
+  //       game.Rounds[index].AliveDistricts,
+  //       index
+  //     );
+
+  //     console.log("Sended something ");
+  //     await delay(game.delay);
+  //   }
+  //   try {
+  //     const winnerHtml = CreateWinnerHTML(game.Districts[0].Players[0]);
+  //     const buffer = await GetPictureBufferSingle(winnerHtml);
+
+  //     const message = CreateEndMessage(
+  //       buffer,
+  //       game.Districts[0].Players[0].User
+  //     );
+  //     SendMessage(game.Channel, message);
+  //   } catch (error) {
+  //     //Only log error
+  //     console.log(error);
+  //   }
+  //   console.log("Sended something ");
+  //   console.log("Ended Sending");
+  // }
 }
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
